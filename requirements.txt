@@ -1,0 +1,22 @@
+#Utilize the following libraries for the project
+numpy 
+pandas
+
+#Face Recognition
+scikit-learn
+dlib-bin
+git+https://github.com/ageitgey/face_recognition_models
+setuptools<70.0.0
+
+#Database and Authentication
+supabase
+bcrypt
+
+#QR-Code Generation
+segno
+
+#Image Processing
+pillow
+
+#UI
+streamlit
