@@ -1,22 +1,25 @@
-#Utilize the following libraries for the project
-numpy 
+streamlit
+numpy
 pandas
 
-#Face Recognition
+# Face Recognition
 scikit-learn
 dlib-bin
 git+https://github.com/ageitgey/face_recognition_models
 setuptools<70.0.0
 
-#Database and Authentication
+# Database
 supabase
 bcrypt
 
-#QR-Code Generation
+# QR
 segno
 
-#Image Processing
+# Image
 pillow
 
-#UI
-streamlit
+# Voice Attendance
+librosa
+resemblyzer
+torch
+webrtcvad
