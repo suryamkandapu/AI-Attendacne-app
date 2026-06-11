@@ -69,12 +69,6 @@ def train_classifier():
     model_data = get_trained_model()
     return bool(model_data)
 
-def predict_attendance(class_image_np):
-    embeddings = get_face_embeddings(class_image_np)
-    detected_students = {}
-    model_data = get_trained_model()
-    if not model_data:
-        return detected_students , [] , len(embeddings)
     
 
 def predict_attendance(class_image_np):
