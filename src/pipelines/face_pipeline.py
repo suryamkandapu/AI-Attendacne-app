@@ -1,36 +1,25 @@
-import dlib
 import numpy as np
-import face_recognition_models
+from insightface.app import FaceAnalysis
 
 from sklearn.svm import SVC
 import streamlit as st
 
 from src.database.db import get_all_students
 
+
 @st.cache_resource
 def load_lib_models():
-    detector = dlib.get_frontal_face_detector()
+    app = FaceAnalysis(name="buffalo_sc", providers=["CPUExecutionProvider"])
+    app.prepare(ctx_id=0, det_size=(640, 640))
+    return app
 
-    sp = dlib.shape_predictor(
-        face_recognition_models.pose_predictor_model_location()
-    )
-    facerec = dlib.face_recognition_model_v1(
-        face_recognition_models.face_recognition_model_location()
-    )
-
-    return detector, sp, facerec
 
 def get_face_embeddings(image_np):
-    detector , sp , facerec = load_lib_models()
-    faces = detector(image_np, 1)
-    embeddings = []
-    for face in faces:
-        shape = sp(image_np, face)
-        face_descriptor = facerec.compute_face_descriptor(image_np, shape , 1)
-        embeddings.append(np.array(face_descriptor))
-    return embeddings 
+    app = load_lib_models()
+    faces = app.get(image_np)
+    embeddings = [face.normed_embedding for face in faces]
+    return embeddings
 
-    
 
 @st.cache_resource
 def get_trained_model():
@@ -54,14 +43,14 @@ def get_trained_model():
         return 0
 
     # clf -> SVC model trained on the face embeddings of students with their student_id as labels
-    clf = SVC( kernel='linear', probability=True,  class_weight='balanced')
+    clf = SVC(kernel='linear', probability=True, class_weight='balanced')
 
     try:
         clf.fit(X, y)
     except ValueError:
         pass
 
-    return {"clf": clf , "X" : X , "y": y}
+    return {"clf": clf, "X": X, "y": y}
 
 
 def train_classifier():
@@ -69,7 +58,6 @@ def train_classifier():
     model_data = get_trained_model()
     return bool(model_data)
 
-    
 
 def predict_attendance(class_image_np):
 
@@ -104,13 +92,14 @@ def predict_attendance(class_image_np):
             y_train.index(predicted_id)
         ]
 
-        best_match_score = np.linalg.norm(
-            student_embedding - encoding
+        # ArcFace embeddings are normalized; use cosine similarity instead of L2 distance
+        cosine_sim = np.dot(student_embedding, encoding) / (
+            np.linalg.norm(student_embedding) * np.linalg.norm(encoding)
         )
 
-        resemblance_threshold = 0.6
+        resemblance_threshold = 0.4  # ArcFace similarity threshold (tune as needed)
 
-        if best_match_score <= resemblance_threshold:
+        if cosine_sim >= resemblance_threshold:
             detected_student[predicted_id] = True
 
     return (
@@ -118,6 +107,3 @@ def predict_attendance(class_image_np):
         all_students,
         len(encodings)
     )
-    
-
-    
